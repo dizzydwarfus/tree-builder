@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Dynamic Inputs + SSE + Tree Diagram</title>
+
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- D3 for the diagram -->
+  <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col items-center p-4 space-y-6">
+
+  <!-- ─────────── Form card ─────────── -->
+  <div class="w-full max-w-md bg-white rounded-md shadow-md p-6 space-y-6">
+    <h1 class="text-2xl font-semibold text-center">Submit Data & Listen for Events</h1>
+
+    <form id="myForm" class="space-y-4">
+      <p class="text-sm text-gray-600">
+        Enter integers; click “＋” to add more fields as needed.
+      </p>
+
+      <div id="inputs" class="space-y-3"></div>
+
+      <!-- Add-field button -->
+      <button type="button" id="addFieldBtn"
+              class="flex items-center gap-1 text-blue-600 hover:text-blue-700 text-sm font-medium">
+        <span class="text-lg leading-none">＋</span> Add field
+      </button>
+
+      <button type="submit"
+              class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded w-full">
+        Submit
+      </button>
+    </form>
+  </div>
+
+  <!-- ─────────── Event console ─────────── -->
+  <div class="w-full max-w-md bg-white rounded-md shadow-md p-6">
+    <h2 class="text-xl font-semibold mb-2">Event Stream Output</h2>
+    <div id="eventOutput"
+         class="h-40 overflow-auto border border-gray-300 p-2 text-sm rounded bg-gray-50 whitespace-pre-wrap"></div>
+  </div>
+
+  <!-- ─────────── Diagram card ─────────── -->
+  <div class="w-full max-w-5xl bg-white rounded-md shadow-md p-6">
+    <h2 class="text-xl font-semibold mb-4">Tree Diagram</h2>
+    <div id="treeWrapper" class="overflow-auto"></div>
+  </div>
+
+  <script>
+    /*********************************************************************
+     * 1.  Build three initial inputs + dynamic “Add field”               *
+     *********************************************************************/
+    let fieldCount = 0;
+    const inputsDiv   = document.getElementById('inputs');
+    const addFieldBtn = document.getElementById('addFieldBtn');
+
+    function addInput () {
+      fieldCount += 1;
+      const wrapper = document.createElement('div');
+
+      wrapper.innerHTML = `
+        <label class="block text-sm font-medium text-gray-700">Value ${fieldCount}</label>
+        <input  id="val${fieldCount}" name="val${fieldCount}" type="number"
+                class="mt-1 w-full border border-gray-300 rounded p-2 focus:ring-2 focus:ring-blue-500">
+      `;
+      inputsDiv.appendChild(wrapper);
+    }
+
+    // create the first three inputs
+    addInput(); addInput(); addInput();
+    addFieldBtn.addEventListener('click', addInput);
+
+    /*********************************************************************
+     * 2.  ONE EventSource for the whole tab                              *
+     *********************************************************************/
+    let eventSource;
+
+    function initEventSource () {
+      if (eventSource) return;
+      eventSource = new EventSource('/events');
+
+      eventSource.onmessage = ({data}) => {
+        const out = document.getElementById('eventOutput');
+        try {
+          const json = JSON.parse(data);
+          out.textContent = JSON.stringify(json, null, 2);
+          renderTree(json);
+        } catch { out.textContent = 'Got SSE: ' + data; }
+      };
+
+      eventSource.onerror = () =>
+        console.error('EventSource failed (auto-reconnect will retry).');
+    }
+
+    window.addEventListener('load', initEventSource);
+    window.addEventListener('beforeunload', () => eventSource?.close());
+
+    /*********************************************************************
+     * 3.  Form submit → POST every number found                         *
+     *********************************************************************/
+    document.getElementById('myForm').addEventListener('submit', e => {
+      e.preventDefault();
+
+      const numbers = Array.from(inputsDiv.querySelectorAll('input[type="number"]'))
+                     .map(el => parseInt(el.value, 10))
+                     .filter(v => !isNaN(v));
+
+      fetch('/tree', {
+        method : 'POST',
+        headers: {'Content-Type':'application/json'},
+        body   : JSON.stringify({data: numbers})
+      }).catch(console.error);
+    });
+
+    /*********************************************************************
+     * 4.  D3 tidy-tree renderer (unchanged)                              *
+     *********************************************************************/
+    function renderTree (data) {
+      const wrapper = d3.select('#treeWrapper');
+      wrapper.select('svg').remove();
+
+      const dx = 32, dy = 120;
+      const root = d3.hierarchy(data, d => d.children);
+      d3.tree().nodeSize([dx, dy])(root);
+
+      const link = d3.linkHorizontal()
+                     .x(d => d.y)
+                     .y(d => d.x);
+
+      let x0 = Infinity, x1 = -Infinity;
+      root.each(d => { x0 = Math.min(x0, d.x); x1 = Math.max(x1, d.x); });
+
+      const svg = wrapper.append('svg')
+        .attr('viewBox', [0, x0 - dx, root.height*dy + 200, x1 - x0 + dx*2])
+        .attr('width', '100%');
+
+      const g = svg.append('g').attr('font-family','sans-serif').attr('font-size',12);
+
+      g.append('g')
+        .selectAll('path')
+        .data(root.links())
+        .join('path')
+          .attr('fill','none')
+          .attr('stroke','#9ca3af')
+          .attr('stroke-width',1.5)
+          .attr('d', link);
+
+      const node = g.append('g')
+        .selectAll('g')
+        .data(root.descendants())
+        .join('g')
+          .attr('transform', d => `translate(${d.y},${d.x})`);
+
+      node.append('circle')
+          .attr('r',14)
+          .attr('stroke','#374151')
+          .attr('stroke-width',1)
+          .attr('fill', d => d.data.metadata?.Color || '#60a5fa');
+
+      node.append('text')
+          .attr('dy','0.32em')
+          .attr('x', d => d.children ? -18 : 18)
+          .attr('text-anchor', d => d.children ? 'end' : 'start')
+          .text(d => d.data.val);
+    }
+
+    /* optional server kick */
+    fetch('/init').catch(() => {});
+  </script>
+</body>
+</html>
