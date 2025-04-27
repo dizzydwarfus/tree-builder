@@ -68,9 +68,6 @@ func BfsMultiChild(root *trees.MultiChildTreeNode) int {
 func DfsMultiChild(node *trees.MultiChildTreeNode, depth *int, maxDepth *int) {
 	// condition should be when node == nil
 	// recursively call current func for each child
-	// maybe need isVisited bool?
-	//TODO: if tree is given without IsVisited field, how to extend tree into a new struct or use interface
-	// problem is function recursion takes in *MultiChildTreeNode and if new struct, cannot default call same function recursively
 	if node == nil {
 		return
 	}

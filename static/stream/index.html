@@ -14,11 +14,11 @@
 
   <!-- ─────────── Form card ─────────── -->
   <div class="w-full max-w-md bg-white rounded-md shadow-md p-6 space-y-6">
-    <h1 class="text-2xl font-semibold text-center">Submit Data & Listen for Events</h1>
+    <h1 class="text-2xl font-semibold text-center">Enter Children per Node &amp; Listen for Events</h1>
 
     <form id="myForm" class="space-y-4">
       <p class="text-sm text-gray-600">
-        Enter integers; click “＋” to add more fields as needed.
+        Enter integers; click “&plus;” to add more fields as needed.
       </p>
 
       <div id="inputs" class="space-y-3"></div>
@@ -26,7 +26,7 @@
       <!-- Add-field button -->
       <button type="button" id="addFieldBtn"
               class="flex items-center gap-1 text-blue-600 hover:text-blue-700 text-sm font-medium">
-        <span class="text-lg leading-none">＋</span> Add field
+        <span class="text-lg leading-none">&plus;</span> Add field
       </button>
 
       <button type="submit"
@@ -62,7 +62,7 @@
       const wrapper = document.createElement('div');
 
       wrapper.innerHTML = `
-        <label class="block text-sm font-medium text-gray-700">Value ${fieldCount}</label>
+        <label class="block text-sm font-medium text-gray-700">Level ${fieldCount}</label>
         <input  id="val${fieldCount}" name="val${fieldCount}" type="number"
                 class="mt-1 w-full border border-gray-300 rounded p-2 focus:ring-2 focus:ring-blue-500">
       `;

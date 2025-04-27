@@ -239,16 +239,7 @@ func initHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func treeInput(ctx context.Context, data TreeParams, hub *SSEHub) error {
-	root := &trees.MultiChildTreeNode{
-		Val:       1,
-		Children:  []*trees.MultiChildTreeNode{},
-		IsVisited: false,
-		Metadata: trees.TreeMetadata{
-			Label: "root",
-			Color: shared.Colors[0],
-			Depth: 0,
-		},
-	}
+	root := trees.NewMultiChildTreeNode(1, "root", shared.Colors[0], 0)
 	// check ctx err
 	if ctx.Err() != nil {
 		return fmt.Errorf("context error: %w", ctx.Err())

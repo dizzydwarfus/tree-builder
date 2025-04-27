@@ -27,17 +27,7 @@ func TreeBuilder(node *trees.MultiChildTreeNode, nodesPerLevel []int, currentCou
 
 		node.Children = append(
 			node.Children,
-			&trees.MultiChildTreeNode{
-				Val:       *currentCounter,
-				Children:  []*trees.MultiChildTreeNode{},
-				IsVisited: false,
-				Metadata: trees.TreeMetadata{
-					Label: "child",
-					// Color: shared.Colors[rand.IntN(len(shared.Colors))],
-					Color: shared.Colors[depth],
-					Depth: depth,
-				},
-			},
+			trees.NewMultiChildTreeNode(*currentCounter, "child", shared.Colors[depth], depth),
 		)
 		*currentCounter++
 	}
