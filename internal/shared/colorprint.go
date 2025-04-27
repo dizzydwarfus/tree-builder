@@ -13,5 +13,5 @@ var (
 	Yellow  = color.New(color.FgYellow).PrintfFunc()
 	Syellow = color.New(color.FgYellow).SprintfFunc()
 
-	Colors = []string{"gold", "firebrick1", "green4", "darksalmon", "aquamarine", "moccasin", "turquoise"}
+	Colors = []string{"gold", "firebrick", "green", "darksalmon", "aquamarine", "moccasin", "turquoise"}
 )
