@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <title>Dynamic Inputs + SSE + Tree Diagram</title>
-
+  <script src="https://unpkg.com/htmx.org@2.0.4"></script>
   <!-- Tailwind -->
   <script src="https://cdn.tailwindcss.com"></script>
 
@@ -35,6 +35,12 @@
       </button>
     </form>
   </div>
+
+  <div>
+    <button hx-get="/htmxtest">
+      Test HTMX To Messages
+    </button>
+</div>
 
   <!-- ─────────── Event console ─────────── -->
   <div class="w-full max-w-md bg-white rounded-md shadow-md p-6">

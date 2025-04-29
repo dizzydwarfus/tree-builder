@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/dizzydwarfus/tree-builder/internal/shared"
+	"github.com/dizzydwarfus/tree-builder/internal/template"
 	"github.com/dizzydwarfus/tree-builder/internal/treetraversal"
 	"github.com/dizzydwarfus/tree-builder/types/trees"
 
@@ -96,11 +97,13 @@ func (s *Server) Start() error {
 	fs := http.FileServer(http.Dir("./static/stream"))
 	se := s.sendEvents()
 	treePost := s.handleTreePost()
+	htmxGet := s.handleHTMXGet()
 
 	mux.Handle("/", fs)
 	mux.HandleFunc("/init", initHandler)
 	mux.Handle("/tree", treePost)
 	mux.Handle("/events", se)
+	mux.Handle("/htmxtest", htmxGet)
 
 	err := http.ListenAndServe(s.listenAddr, mux)
 	log.Print(shared.Sred("[Server] HTTP server stopped.\n"))
@@ -217,6 +220,15 @@ func (s *Server) handleTreePost() http.Handler {
 	})
 }
 
+func (s *Server) handleHTMXGet() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		template.TreeResponse(w)
+	})
+}
 func ContentHandler(content string, contentType string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", contentType)
